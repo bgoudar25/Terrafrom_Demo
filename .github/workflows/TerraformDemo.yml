@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to AWS
 
 on:
   push:
@@ -11,27 +11,18 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4   # ✅ upgraded
 
-    - name: Setup Node (Example)
-      uses: actions/setup-node@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4   # ✅ upgraded
       with:
-        node-version: '18'
+        node-version: '20'   # your app runtime, NOT related to runner
 
     - name: Install Dependencies
       run: npm install
 
-    - name: Build Application
+    - name: Build
       run: npm run build
 
-    - name: Deploy to EC2 via SSH
-      uses: appleboy/ssh-action@v0.1.6
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd /var/www/app
-          git pull origin main
-          npm install
-          pm2 restart app
+    - name: Deploy (example)
+      run: echo "Deploy step here"
