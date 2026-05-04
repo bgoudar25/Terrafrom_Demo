@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Terraform Deploy
 
 on:
   push:
@@ -11,18 +11,20 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4   # ✅ upgraded
+      uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4   # ✅ upgraded
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        node-version: '20'   # your app runtime, NOT related to runner
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Install Dependencies
-      run: npm install
+    - name: Verify AWS Access
+      run: aws sts get-caller-identity
 
-    - name: Build
-      run: npm run build
+    - name: Terraform Init
+      run: terraform init
 
-    - name: Deploy (example)
-      run: echo "Deploy step here"
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
