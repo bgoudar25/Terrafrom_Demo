@@ -13,13 +13,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Upload Source
-      uses: actions/upload-artifact@v4
-      with:
-        name: source
-        path: .
+      - name: Upload Source
+        uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: .
 
 
   # 🔹 Stage 1 - Init
@@ -32,26 +33,29 @@ jobs:
       AWS_REGION: ap-south-1
 
     steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: source
+      - name: Download Source
+        uses: actions/download-artifact@v4
+        with:
+          name: source
 
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - run: terraform init
-      run: terraform init
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Upload Init
-      uses: actions/upload-artifact@v4
-      with:
-        name: tf-init
-        path: .
+      - name: Upload Init
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-init
+          path: .
 
 
   # 🔹 Stage 2 - Validate
@@ -64,19 +68,25 @@ jobs:
       AWS_REGION: ap-south-1
 
     steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: tf-init
+      - name: Download Init Files
+        uses: actions/download-artifact@v4
+        with:
+          name: tf-init
 
-    - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - run: terraform validate
+      - name: Terraform Init   # ✅ required again
+        run: terraform init
 
-    - name: Upload Validate
-      uses: actions/upload-artifact@v4
-      with:
-        name: tf-validate
-        path: .
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Upload Validate
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-validate
+          path: .
 
 
   # 🔹 Stage 3 - Plan
@@ -89,25 +99,32 @@ jobs:
       AWS_REGION: ap-south-1
 
     steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: tf-validate
+      - name: Download Validate Files
+        uses: actions/download-artifact@v4
+        with:
+          name: tf-validate
 
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - run: terraform plan -out=tfplan
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Upload Plan
-      uses: actions/upload-artifact@v4
-      with:
-        name: tfplan
-        path: tfplan
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
 
 
   # 🔹 Stage 4 - Apply
@@ -120,23 +137,28 @@ jobs:
       AWS_REGION: ap-south-1
 
     steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: source
+      - name: Download Source
+        uses: actions/download-artifact@v4
+        with:
+          name: source
 
-    - uses: actions/download-artifact@v4
-      with:
-        name: tfplan
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
 
-    - uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - run: terraform init
-     run: terraform init
+      - name: Terraform Init
+        run: terraform init
 
-    - run: terraform apply -auto-approve tfplan
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
