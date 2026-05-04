@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: ap-south-1   # matches your provider.tf
+      AWS_REGION: ap-south-1
 
     steps:
     - name: Checkout Code
@@ -25,6 +25,9 @@ jobs:
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+
+    - name: Verify Terraform Installation
+      run: terraform -version
 
     - name: Terraform Init
       run: terraform init
