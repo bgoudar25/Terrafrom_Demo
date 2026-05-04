@@ -9,23 +9,22 @@ jobs:
 
   # 🔹 Stage 0 - Clone
   clone:
-    name: 🔹 Stage 0 - Clone Repo
+    name: 🔹 Stage 0 - Clone
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Upload Source Code
+    - name: Upload Source
       uses: actions/upload-artifact@v4
       with:
-        name: source-code
+        name: source
         path: .
 
 
-  # 🔹 Stage 1 - Plan
-  terraform-plan:
-    name: 🔹 Stage 1 - Plan
+  # 🔹 Stage 1 - Init
+  terraform-init:
+    name: 🔹 Stage 1 - Terraform Init
     runs-on: ubuntu-latest
     needs: clone
 
@@ -33,29 +32,75 @@ jobs:
       AWS_REGION: ap-south-1
 
     steps:
-    - name: Download Source Code
-      uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v4
       with:
-        name: source-code
+        name: source
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+    - uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Init
-      run: terraform init
+    - run: terraform init
 
-    - name: Terraform Validate
-      run: terraform validate
+    - name: Upload Init
+      uses: actions/upload-artifact@v4
+      with:
+        name: tf-init
+        path: .
 
-    - name: Terraform Plan
-      run: terraform plan -out=tfplan
+
+  # 🔹 Stage 2 - Validate
+  terraform-validate:
+    name: 🔹 Stage 2 - Terraform Validate
+    runs-on: ubuntu-latest
+    needs: terraform-init
+
+    env:
+      AWS_REGION: ap-south-1
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: tf-init
+
+    - uses: hashicorp/setup-terraform@v3
+
+    - run: terraform validate
+
+    - name: Upload Validate
+      uses: actions/upload-artifact@v4
+      with:
+        name: tf-validate
+        path: .
+
+
+  # 🔹 Stage 3 - Plan
+  terraform-plan:
+    name: 🔹 Stage 3 - Terraform Plan
+    runs-on: ubuntu-latest
+    needs: terraform-validate
+
+    env:
+      AWS_REGION: ap-south-1
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: tf-validate
+
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - uses: hashicorp/setup-terraform@v3
+
+    - run: terraform plan -out=tfplan
 
     - name: Upload Plan
       uses: actions/upload-artifact@v4
@@ -64,9 +109,9 @@ jobs:
         path: tfplan
 
 
-  # 🔹 Stage 2 - Apply
+  # 🔹 Stage 4 - Apply
   terraform-apply:
-    name: 🔹 Stage 2 - Apply
+    name: 🔹 Stage 4 - Terraform Apply
     runs-on: ubuntu-latest
     needs: terraform-plan
 
@@ -74,28 +119,22 @@ jobs:
       AWS_REGION: ap-south-1
 
     steps:
-    - name: Download Source Code
-      uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v4
       with:
-        name: source-code
+        name: source
 
-    - name: Download Plan
-      uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v4
       with:
         name: tfplan
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
+    - uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+    - uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Init
-      run: terraform init
+    - run: terraform init
 
-    - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+    - run: terraform apply -auto-approve tfplan
