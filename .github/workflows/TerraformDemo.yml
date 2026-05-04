@@ -6,7 +6,9 @@ on:
       - main
 
 jobs:
-  terraform:
+
+  terraform-plan:
+    name: 🔹 Stage 1 - Plan
     runs-on: ubuntu-latest
 
     env:
@@ -26,9 +28,6 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    - name: Verify Terraform Installation
-      run: terraform -version
-
     - name: Terraform Init
       run: terraform init
 
@@ -36,4 +35,44 @@ jobs:
       run: terraform validate
 
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan -out=tfplan
+
+    - name: Upload Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan
+        path: tfplan
+
+
+  terraform-apply:
+    name: 🔹 Stage 2 - Apply
+    runs-on: ubuntu-latest
+    needs: terraform-plan   # 👈 THIS creates stage flow
+
+    env:
+      AWS_REGION: ap-south-1
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Download Plan
+      uses: actions/download-artifact@v4
+      with:
+        name: tfplan
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
