@@ -4,8 +4,8 @@ provider "aws" {
 
 resource "aws_instance" "my_ec2" {
   ami           = "ami-0388e3ada3d9812da"
-  instance_type = "t12.micro"
-  key_name      = "BasavashKeypaire"
+  instance_type = "t15.micro"
+  key_name      = "BasavarajshKeypaire"
 
   tags = {
     Name = "MyTerraformEC2"
